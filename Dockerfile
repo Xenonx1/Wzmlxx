@@ -13,38 +13,48 @@ RUN apt-get update && \
     aria2c --version && \
     rm -rf /var/lib/apt/lists/*
 
-# Install and expose helper programs
+# Install and configure helper programs
 RUN set -eux; \
-    need=""; \
-    command -v qbittorrent-nox >/dev/null 2>&1 || command -v stormtorrent >/dev/null 2>&1 || need="$need qbittorrent-nox"; \
-    command -v aria2c >/dev/null 2>&1 || command -v blitzfetcher >/dev/null 2>&1 || need="$need aria2"; \
-    command -v ffmpeg >/dev/null 2>&1 || command -v mediaforge >/dev/null 2>&1 || need="$need ffmpeg"; \
-    command -v curl >/dev/null 2>&1 || need="$need curl"; \
-    command -v pkill >/dev/null 2>&1 || need="$need procps"; \
-    if [ -n "$need" ]; then \
-        apt-get update && apt-get install -y --no-install-recommends $need && rm -rf /var/lib/apt/lists/*; \
-    fi; \
-    if ! command -v 7z >/dev/null 2>&1; then \
-        (apt-get update && (apt-get install -y --no-install-recommends p7zip-full || apt-get install -y --no-install-recommends 7zip) && rm -rf /var/lib/apt/lists/*) || true; \
-    fi; \
-    for pair in stormtorrent:qbittorrent-nox blitzfetcher:aria2c mediaforge:ffmpeg; do \
-        alias="${pair%%:*}"; real="${pair##*:}"; \
-        if ! command -v "$alias" >/dev/null 2>&1 && command -v "$real" >/dev/null 2>&1; then \
-            ln -sf "$(command -v "$real")" "/usr/bin/$alias"; \
-        fi; \
-    done; \
-    ln -sf "$(command -v ffmpeg)" /usr/bin/mediaforge; \
-    ln -sf "$(command -v ffmpeg)" /bin/mediaforge; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        qbittorrent-nox \
+        aria2 \
+        ffmpeg \
+        curl \
+        procps; \
+    rm -rf /var/lib/apt/lists/*; \
+    FFMPEG="$(type -P ffmpeg)"; \
+    ARIA2="$(type -P aria2c)"; \
+    QBIT="$(type -P qbittorrent-nox)"; \
+    test -x "$FFMPEG"; \
+    test -x "$ARIA2"; \
+    test -x "$QBIT"; \
+    ln -sf "$FFMPEG" /usr/bin/mediaforge; \
+    ln -sf "$FFMPEG" /bin/mediaforge; \
+    ln -sf "$QBIT" /usr/bin/stormtorrent; \
+    ln -sf "$ARIA2" /usr/bin/blitzfetcher; \
+    echo "=== Verify helper programs ==="; \
     command -v mediaforge; \
-    mediaforge -version
+    mediaforge -version; \
+    command -v stormtorrent; \
+    command -v blitzfetcher; \
+    aria2c --version
 
+# Set application permissions
 RUN chmod 777 /usr/src/app
+
+# Create Python virtual environment
 RUN uv venv --system-site-packages
 
+# Install Python dependencies
 COPY requirements.txt .
 RUN uv pip install --no-cache-dir -r requirements.txt
 
+# Copy bot source code
 COPY . .
+
+# Make startup scripts executable
 RUN chmod +x start.sh setpkgs.sh
 
+# Start bot
 CMD ["bash", "start.sh"]
