@@ -18,7 +18,7 @@ natsort
 pillow
 psutil
 pycountry
-pyrotgfork==2.2.19
+pyrotgfork
 python-magic
 pytz
 requests
