@@ -1,6 +1,6 @@
-# WZML-X Leech (Telegram leech only)
+# (Telegram leech only)
 
-Stripped-down WZML-X: **Telegram leech only**. Mirror, clone, Google Drive, rclone, Mega,
+Stripped-down : **Telegram leech only**. Mirror, clone, Google Drive, rclone, Mega,
 JDownloader, NZB/Usenet, uphosters, RSS, torrent search and IMDb were removed.
 
 ## Commands
