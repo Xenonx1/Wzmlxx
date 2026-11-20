@@ -36,37 +36,37 @@ except ImportError:  # pragma: no cover
 USER_FILE_KEYS = ("THUMBNAIL", "USER_COOKIE_FILE")
 
 SCHEMA = """
-CREATE TABLE IF NOT EXISTS settings (
+CREATE TABLE IF NOT EXISTS wzml_settings (
     bot_id TEXT NOT NULL,
     kind   TEXT NOT NULL,
     data   JSONB NOT NULL DEFAULT '{}'::jsonb,
     PRIMARY KEY (bot_id, kind)
 );
-CREATE TABLE IF NOT EXISTS files (
+CREATE TABLE IF NOT EXISTS wzml_files (
     bot_id  TEXT  NOT NULL,
     name    TEXT  NOT NULL,
     content BYTEA NOT NULL,
     PRIMARY KEY (bot_id, name)
 );
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS wzml_users (
     bot_id  TEXT   NOT NULL,
     user_id BIGINT NOT NULL,
     data    JSONB  NOT NULL DEFAULT '{}'::jsonb,
     PRIMARY KEY (bot_id, user_id)
 );
-CREATE TABLE IF NOT EXISTS user_docs (
+CREATE TABLE IF NOT EXISTS wzml_user_docs (
     bot_id  TEXT   NOT NULL,
     user_id BIGINT NOT NULL,
     key     TEXT   NOT NULL,
     content BYTEA  NOT NULL,
     PRIMARY KEY (bot_id, user_id, key)
 );
-CREATE TABLE IF NOT EXISTS pm_users (
+CREATE TABLE IF NOT EXISTS wzml_pm_users (
     bot_id  TEXT   NOT NULL,
     user_id BIGINT NOT NULL,
     PRIMARY KEY (bot_id, user_id)
 );
-CREATE TABLE IF NOT EXISTS tasks (
+CREATE TABLE IF NOT EXISTS wzml_tasks (
     bot_id TEXT   NOT NULL,
     link   TEXT   NOT NULL,
     cid    BIGINT NOT NULL,
@@ -163,7 +163,7 @@ class DbManager:
         if self._return:
             return None
         row = await self._pool.fetchrow(
-            "SELECT data::text AS data FROM settings WHERE bot_id=$1 AND kind=$2",
+            "SELECT data::text AS data FROM wzml_settings WHERE bot_id=$1 AND kind=$2",
             str(bot_id or self._bot),
             kind,
         )
@@ -174,7 +174,7 @@ class DbManager:
         if self._return:
             return
         await self._pool.execute(
-            """INSERT INTO settings (bot_id, kind, data) VALUES ($1, $2, $3::text::jsonb)
+            """INSERT INTO wzml_settings (bot_id, kind, data) VALUES ($1, $2, $3::text::jsonb)
                ON CONFLICT (bot_id, kind) DO UPDATE SET data = EXCLUDED.data""",
             str(bot_id or self._bot),
             kind,
@@ -186,9 +186,9 @@ class DbManager:
         if self._return:
             return
         await self._pool.execute(
-            """INSERT INTO settings (bot_id, kind, data) VALUES ($1, $2, $3::text::jsonb)
+            """INSERT INTO wzml_settings (bot_id, kind, data) VALUES ($1, $2, $3::text::jsonb)
                ON CONFLICT (bot_id, kind)
-               DO UPDATE SET data = settings.data || EXCLUDED.data""",
+               DO UPDATE SET data = wzml_settings.data || EXCLUDED.data""",
             self._bot,
             kind,
             _dumps(data),
@@ -230,7 +230,7 @@ class DbManager:
             async with aiopen(path, "rb+") as pf:
                 pf_bin = await pf.read()
             await self._pool.execute(
-                """INSERT INTO files (bot_id, name, content) VALUES ($1, $2, $3)
+                """INSERT INTO wzml_files (bot_id, name, content) VALUES ($1, $2, $3)
                    ON CONFLICT (bot_id, name) DO UPDATE SET content = EXCLUDED.content""",
                 self._bot,
                 path,
@@ -240,14 +240,14 @@ class DbManager:
                 await self.update_deploy_config()
         else:
             await self._pool.execute(
-                "DELETE FROM files WHERE bot_id=$1 AND name=$2", self._bot, path
+                "DELETE FROM wzml_files WHERE bot_id=$1 AND name=$2", self._bot, path
             )
 
     async def get_private_files(self, bot_id=None):
         if self._return:
             return {}
         rows = await self._pool.fetch(
-            "SELECT name, content FROM files WHERE bot_id=$1", str(bot_id or self._bot)
+            "SELECT name, content FROM wzml_files WHERE bot_id=$1", str(bot_id or self._bot)
         )
         return {r["name"]: bytes(r["content"]) for r in rows}
 
@@ -261,7 +261,7 @@ class DbManager:
         for key in (*USER_FILE_KEYS, "RCLONE_CONFIG", "TOKEN_PICKLE"):
             data.pop(key, None)
         await self._pool.execute(
-            """INSERT INTO users (bot_id, user_id, data) VALUES ($1, $2, $3::text::jsonb)
+            """INSERT INTO wzml_users (bot_id, user_id, data) VALUES ($1, $2, $3::text::jsonb)
                ON CONFLICT (bot_id, user_id) DO UPDATE SET data = EXCLUDED.data""",
             self._bot,
             int(user_id),
@@ -275,7 +275,7 @@ class DbManager:
             async with aiopen(path, "rb+") as doc:
                 doc_bin = await doc.read()
             await self._pool.execute(
-                """INSERT INTO user_docs (bot_id, user_id, key, content)
+                """INSERT INTO wzml_user_docs (bot_id, user_id, key, content)
                    VALUES ($1, $2, $3, $4)
                    ON CONFLICT (bot_id, user_id, key)
                    DO UPDATE SET content = EXCLUDED.content""",
@@ -286,7 +286,7 @@ class DbManager:
             )
         else:
             await self._pool.execute(
-                "DELETE FROM user_docs WHERE bot_id=$1 AND user_id=$2 AND key=$3",
+                "DELETE FROM wzml_user_docs WHERE bot_id=$1 AND user_id=$2 AND key=$3",
                 self._bot,
                 int(user_id),
                 key,
@@ -299,11 +299,11 @@ class DbManager:
         bot = str(bot_id or self._bot)
         users = {}
         for r in await self._pool.fetch(
-            "SELECT user_id, data::text AS data FROM users WHERE bot_id=$1", bot
+            "SELECT user_id, data::text AS data FROM wzml_users WHERE bot_id=$1", bot
         ):
             users[r["user_id"]] = {"data": loads(r["data"]), "docs": {}}
         for r in await self._pool.fetch(
-            "SELECT user_id, key, content FROM user_docs WHERE bot_id=$1", bot
+            "SELECT user_id, key, content FROM wzml_user_docs WHERE bot_id=$1", bot
         ):
             users.setdefault(r["user_id"], {"data": {}, "docs": {}})["docs"][
                 r["key"]
@@ -317,7 +317,7 @@ class DbManager:
         if self._return:
             return
         rows = await self._pool.fetch(
-            "SELECT user_id FROM pm_users WHERE bot_id=$1", self._bot
+            "SELECT user_id FROM wzml_pm_users WHERE bot_id=$1", self._bot
         )
         return [r["user_id"] for r in rows]
 
@@ -325,7 +325,7 @@ class DbManager:
         if self._return:
             return
         result = await self._pool.execute(
-            """INSERT INTO pm_users (bot_id, user_id) VALUES ($1, $2)
+            """INSERT INTO wzml_pm_users (bot_id, user_id) VALUES ($1, $2)
                ON CONFLICT DO NOTHING""",
             self._bot,
             int(user_id),
@@ -337,7 +337,7 @@ class DbManager:
         if self._return:
             return
         await self._pool.execute(
-            "DELETE FROM pm_users WHERE bot_id=$1 AND user_id=$2",
+            "DELETE FROM wzml_pm_users WHERE bot_id=$1 AND user_id=$2",
             self._bot,
             int(user_id),
         )
@@ -349,7 +349,7 @@ class DbManager:
         if self._return:
             return
         await self._pool.execute(
-            """INSERT INTO tasks (bot_id, link, cid, tag) VALUES ($1, $2, $3, $4)
+            """INSERT INTO wzml_tasks (bot_id, link, cid, tag) VALUES ($1, $2, $3, $4)
                ON CONFLICT (bot_id, link) DO UPDATE SET cid=EXCLUDED.cid, tag=EXCLUDED.tag""",
             self._bot,
             link,
@@ -361,7 +361,7 @@ class DbManager:
         if self._return:
             return
         await self._pool.execute(
-            "DELETE FROM tasks WHERE bot_id=$1 AND link=$2", self._bot, link
+            "DELETE FROM wzml_tasks WHERE bot_id=$1 AND link=$2", self._bot, link
         )
 
     async def get_incomplete_tasks(self):
@@ -369,20 +369,20 @@ class DbManager:
         if self._return:
             return notifier_dict
         rows = await self._pool.fetch(
-            "SELECT link, cid, tag FROM tasks WHERE bot_id=$1", self._bot
+            "SELECT link, cid, tag FROM wzml_tasks WHERE bot_id=$1", self._bot
         )
         for row in rows:
             notifier_dict.setdefault(row["cid"], {}).setdefault(row["tag"], []).append(
                 row["link"]
             )
-        await self._pool.execute("DELETE FROM tasks WHERE bot_id=$1", self._bot)
+        await self._pool.execute("DELETE FROM wzml_tasks WHERE bot_id=$1", self._bot)
         return notifier_dict
 
     async def trunc_table(self, name):
         """Clear this bot's rows of a table (name is whitelisted)."""
         if self._return or name not in TABLES:
             return
-        await self._pool.execute(f"DELETE FROM {name} WHERE bot_id=$1", self._bot)
+        await self._pool.execute(f"DELETE FROM wzml_{name} WHERE bot_id=$1", self._bot)
 
 
 database = DbManager()
