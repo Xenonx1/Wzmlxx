@@ -21,4 +21,4 @@ for i in $(seq 1 20); do
 done
 echo "aria2 RPC did NOT start. Last aria2 log lines:"
 tail -n 30 /tmp/aria2.log 2>/dev/null
-exit 0
+exit 1
