@@ -13,7 +13,7 @@ RUN apt-get update && \
     aria2c --version && \
     rm -rf /var/lib/apt/lists/*
 
-# Install and configure helper programs
+# Install helper programs and create bot aliases
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
@@ -23,22 +23,19 @@ RUN set -eux; \
         curl \
         procps; \
     rm -rf /var/lib/apt/lists/*; \
-    FFMPEG="$(type -P ffmpeg)"; \
-    ARIA2="$(type -P aria2c)"; \
-    QBIT="$(type -P qbittorrent-nox)"; \
-    test -x "$FFMPEG"; \
-    test -x "$ARIA2"; \
-    test -x "$QBIT"; \
-    ln -sf "$FFMPEG" /usr/bin/mediaforge; \
-    ln -sf "$FFMPEG" /bin/mediaforge; \
-    ln -sf "$QBIT" /usr/bin/stormtorrent; \
-    ln -sf "$ARIA2" /usr/bin/blitzfetcher; \
-    echo "=== Verify helper programs ==="; \
-    command -v mediaforge; \
-    mediaforge -version; \
-    command -v stormtorrent; \
-    command -v blitzfetcher; \
-    aria2c --version
+    test -x /usr/bin/ffmpeg; \
+    test -x /usr/bin/aria2c; \
+    test -x /usr/bin/qbittorrent-nox; \
+    ln -sf /usr/bin/ffmpeg /usr/bin/mediaforge; \
+    ln -sf /usr/bin/ffmpeg /bin/mediaforge; \
+    ln -sf /usr/bin/qbittorrent-nox /usr/bin/stormtorrent; \
+    ln -sf /usr/bin/aria2c /usr/bin/blitzfetcher; \
+    echo "=== Verify FFmpeg alias ==="; \
+    /usr/bin/mediaforge -version; \
+    echo "=== Verify qBittorrent alias ==="; \
+    /usr/bin/stormtorrent --version; \
+    echo "=== Verify Aria2 alias ==="; \
+    /usr/bin/blitzfetcher --version
 
 # Set application permissions
 RUN chmod 777 /usr/src/app
