@@ -39,7 +39,7 @@ async def update_qb_options():
                 del qbit_options[k]
         qbit_options["web_ui_password"] = "admin1234"
         await TorrentManager.qbittorrent.app.set_preferences(
-            {"web_ui_password": "admin"}
+            {"web_ui_password": "admin1234"}
         )
     else:
         await TorrentManager.qbittorrent.app.set_preferences(qbit_options)
