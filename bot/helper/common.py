@@ -77,7 +77,11 @@ class TaskConfig:
         self.up_dir = ""
         self.link = ""
         self.up_dest = ""
-        self.leech_dest = ""
+                self.leech_dest = (
+            self.up_dest
+            or self.user_dict.get("LEECH_DUMP_CHAT")
+            or Config.LEECH_COPY_CHAT
+                )
         self.rc_flags = ""
         self.tag = ""
         self.name = ""
