@@ -35,7 +35,7 @@ RUN set -eux; \
     echo "=== Verify qBittorrent alias ==="; \
     /usr/bin/stormtorrent --version; \
     echo "=== Verify Aria2 alias ==="; \
-    /usr/bin/blitzfetcher --version
+    /usr/bin/blitzfetcher --v
 
 # Set application permissions
 RUN chmod 777 /usr/src/app
