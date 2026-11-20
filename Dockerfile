@@ -1,12 +1,17 @@
 FROM mysterysd/wzmlx:v3
 
 WORKDIR /usr/src/app
-# Install and verify Aria2
+
+# Repair and verify Aria2 installation
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends aria2 && \
-    test -x /usr/bin/aria2c && \
-    /usr/bin/aria2c --version && \
+    apt-get install -y --reinstall --no-install-recommends aria2 && \
+    echo "=== Aria2 package files ===" && \
+    dpkg -L aria2 | grep -E 'aria2c$' && \
+    echo "=== Aria2 executable ===" && \
+    command -v aria2c && \
+    aria2c --version && \
     rm -rf /var/lib/apt/lists/*
+
 # Make sure the helper programs exist, and expose them under the names the bot calls.
 RUN set -e; \
     need=""; \
