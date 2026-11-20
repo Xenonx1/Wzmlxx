@@ -13,7 +13,13 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Make sure the helper programs exist, and expose them under the names the bot calls.
-RUN set -e; \
+RUN set RUN set -eux; \
+    FFMPEG="$(command -v ffmpeg)"; \
+    ln -sf "$FFMPEG" /usr/bin/mediaforge; \
+    ln -sf "$FFMPEG" /bin/mediaforge; \
+    command -v mediaforge; \
+    mediaforge -version
+    -e; \
     need=""; \
     command -v qbittorrent-nox >/dev/null 2>&1 || command -v stormtorrent >/dev/null 2>&1 || need="$need qbittorrent-nox"; \
     command -v aria2c >/dev/null 2>&1 || command -v blitzfetcher >/dev/null 2>&1 || need="$need aria2"; \
