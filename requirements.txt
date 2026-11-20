@@ -27,5 +27,5 @@ tenacity
 tgcrypto
 urllib3
 uvicorn
-uvloop==0.22.0
+uvloop
 yt-dlp[default,curl-cffi]
