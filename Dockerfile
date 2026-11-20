@@ -1,3 +1,4 @@
+
 FROM mysterysd/wzmlx:v3
 
 WORKDIR /usr/src/app
@@ -12,14 +13,8 @@ RUN apt-get update && \
     aria2c --version && \
     rm -rf /var/lib/apt/lists/*
 
-# Make sure the helper programs exist, and expose them under the names the bot calls.
-RUN set RUN set -eux; \
-    FFMPEG="$(command -v ffmpeg)"; \
-    ln -sf "$FFMPEG" /usr/bin/mediaforge; \
-    ln -sf "$FFMPEG" /bin/mediaforge; \
-    command -v mediaforge; \
-    mediaforge -version
-    -e; \
+# Install and expose helper programs
+RUN set -eux; \
     need=""; \
     command -v qbittorrent-nox >/dev/null 2>&1 || command -v stormtorrent >/dev/null 2>&1 || need="$need qbittorrent-nox"; \
     command -v aria2c >/dev/null 2>&1 || command -v blitzfetcher >/dev/null 2>&1 || need="$need aria2"; \
@@ -35,10 +30,13 @@ RUN set RUN set -eux; \
     for pair in stormtorrent:qbittorrent-nox blitzfetcher:aria2c mediaforge:ffmpeg; do \
         alias="${pair%%:*}"; real="${pair##*:}"; \
         if ! command -v "$alias" >/dev/null 2>&1 && command -v "$real" >/dev/null 2>&1; then \
-            ln -s "$(command -v $real)" "/usr/bin/$alias"; \
+            ln -sf "$(command -v "$real")" "/usr/bin/$alias"; \
         fi; \
     done; \
-    [ -e /bin/mediaforge ] || ln -s "$(command -v mediaforge)" /bin/mediaforge 2>/dev/null || true
+    ln -sf "$(command -v ffmpeg)" /usr/bin/mediaforge; \
+    ln -sf "$(command -v ffmpeg)" /bin/mediaforge; \
+    command -v mediaforge; \
+    mediaforge -version
 
 RUN chmod 777 /usr/src/app
 RUN uv venv --system-site-packages
