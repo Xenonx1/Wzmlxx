@@ -1,6 +1,13 @@
 #!/bin/bash
 ARIA2C=$1
 
+# fall back to the normal program name if the alias is missing
+if ! command -v "$ARIA2C" >/dev/null 2>&1; then
+    for c in aria2c /usr/bin/aria2c /usr/local/bin/aria2c; do
+        if command -v "$c" >/dev/null 2>&1; then ARIA2C=$c; break; fi
+    done
+fi
+
 tracker_list=$(curl -Ns --max-time 15 https://ngosang.github.io/trackerslist/trackers_all_http.txt | awk '$0' | tr '\n\n' ',')
 
 wait_rpc() {
