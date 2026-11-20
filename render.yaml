@@ -1,0 +1,39 @@
+# Render Blueprint: Dashboard -> New -> Blueprint -> pick this repo.
+# Secrets (sync: false) are asked for in the dashboard on first deploy.
+services:
+  - type: web
+    name: wzml-leech
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free            # free = 512 MB RAM, sleeps when idle; use "starter" for real leeching
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      # ---- required ----
+      - key: BOT_TOKEN
+        sync: false
+      - key: OWNER_ID
+        sync: false
+      - key: TELEGRAM_API
+        sync: false
+      - key: TELEGRAM_HASH
+        sync: false
+      - key: DATABASE_URL        # Neon connection string (postgresql://...neon.tech/db?sslmode=require)
+        sync: false
+      - key: BASE_URL            # this service's public URL, e.g. https://wzml-leech.onrender.com
+        sync: false
+      # ---- optional ----
+      - key: USER_SESSION_STRING # premium account session => 4 GB uploads
+        sync: false
+      - key: AUTHORIZED_CHATS    # space separated chat ids
+        value: ""
+      - key: SUDO_USERS
+        value: ""
+      - key: LEECH_DUMP_CHAT
+        value: ""
+      - key: TIMEZONE
+        value: Asia/Kolkata
+      - key: DISABLE_TORRENTS
+        value: "false"
+      - key: WEB_PINCODE
+        value: "true"
